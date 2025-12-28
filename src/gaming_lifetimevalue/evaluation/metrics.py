@@ -5,7 +5,9 @@ from sklearn.metrics import (
     mean_absolute_error,
     mean_squared_error,
     r2_score,
+    confusion_matrix
 )
+import plotly.graph_objects as go
 from typing import Dict, Any
 
 
@@ -49,3 +51,29 @@ def evaluate_regressor(y_true, y_pred) -> Dict[str, float]:
         "mean_actual": np.mean(y_true),
         "mean_predicted": np.mean(y_pred),
     }
+
+def plot_confusion_matrix(y_test, y_pred, target_map):
+    labels = list(target_map.keys())
+    cm = confusion_matrix(y_test, y_pred)
+
+    cm_perc = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+
+    fig = go.Figure(data=go.Heatmap(
+        z=cm_perc,
+        x=labels,
+        y=labels,
+        text=np.around(cm_perc, 2),
+        texttemplate="%{text}",
+        colorscale='Viridis',
+        hoverinfo='z'
+    ))
+
+    fig.update_layout(
+        title='Confusion Matrix',
+        xaxis_title='Predicted Cohort',
+        yaxis_title='Actual Cohort',
+        width=600,
+        height=600
+    )
+
+    return fig

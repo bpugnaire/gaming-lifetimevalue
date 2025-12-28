@@ -389,9 +389,7 @@ def _():
         "objective": "multiclass",
         "num_class": 6,
         "metric": "multi_logloss",
-        # "learning_rate": 0.02,    
-        # "num_leaves": 40,         
-        # "max_depth": 8,           
+         
     }
     return (params,)
 

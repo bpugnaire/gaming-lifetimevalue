@@ -1,9 +1,10 @@
 import polars as pl
 import lightgbm as lgb
+from pathlib import Path
 
 from lightgbm import LGBMClassifier
 from sklearn.model_selection import train_test_split
-from gaming_lifetimevalue.evaluation.metrics import evaluate_classifier
+from gaming_lifetimevalue.evaluation.metrics import evaluate_classifier, plot_confusion_matrix
 
 
 def train_cohort_classifier(
@@ -32,15 +33,12 @@ def train_cohort_classifier(
         X, y, test_size=0.1, random_state=42, stratify=y
     )
 
-    class_weights = {
-        0: 1.0,  # Low Revenue - baseline
-        1: 2.0,  # Top 50% - 2x more important
-        2: 10.0,  # Top 20% - 10x more important
-        3: 50.0,  # Top 5% - 50x more important
-        4: 100.0,  # Top 1% - 100x more important
-    }
+    counts = y_train["cohort"].value_counts()
+    total_samples = len(y_train)
+    num_classes = y_train["cohort"].nunique()
+    weights_map = (total_samples / (num_classes * counts)).to_dict()
 
-    train_weights = y_train["cohort"].map(class_weights).values.tolist()
+    train_weights = y_train["cohort"].map(weights_map).values.tolist()
 
     model = LGBMClassifier(
         **lgbm_params,
@@ -63,9 +61,16 @@ def train_cohort_classifier(
     print(f"F1 Weighted: {metrics['f1_weighted']:.4f}")
     print("\nClassification Report:")
     for class_name, class_metrics in metrics["classification_report"].items():
-        if class_name.isdigit():
+        if isinstance(class_metrics, dict) and "precision" in class_metrics:
             print(
                 f"Class {class_name} - Precision: {class_metrics['precision']:.4f}, "
                 f"Recall: {class_metrics['recall']:.4f}, F1-Score: {class_metrics['f1-score']:.4f}"
             )
+    
+    fig = plot_confusion_matrix(y_test.values.ravel(), y_pred, target_map)
+    output_dir = Path("data/figures")
+    output_dir.mkdir(parents=True, exist_ok=True)
+    fig.write_image(output_dir / "classifier_confusion_matrix_train.png")
+    print(f"\nConfusion matrix saved to {output_dir / 'classifier_confusion_matrix_train.png'}")
+    
     return model

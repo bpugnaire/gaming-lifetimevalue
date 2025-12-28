@@ -31,14 +31,8 @@ def _():
 def _(mo):
     mo.md("""
     # Simple Regression Baseline
-    """)
-    return
 
-
-@app.cell(hide_code=True)
-def _(mo):
-    mo.md("""
-    ## Load Data
+    Let's build a simple regression model using LightGBM to predict the target variable `d120_rev` directly. It will give us a reasonnable baseline that we should later try to improve.
     """)
     return
 
@@ -255,38 +249,17 @@ def _(
     return
 
 
+@app.cell
+def _():
+    return
+
+
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md("""
-    ## Generate Test Predictions
+    mo.md(r"""
+    As expected, while the global results where difficult to interpret, with cohort segmentation we clearly see that the model struggles on high value users (the "whales"), which are also the less represented in the dataset. It seems that it tends to under-predict their value.
+    On the contrary, low value users spending is greatly overestimated.
     """)
-    return
-
-
-@app.cell
-def _():
-    # X_test = test_df.select(feature_cols).to_pandas()
-    # X_test = X_test.fillna(0)
-
-    # test_predictions = model.predict(X_test)
-
-    # submission = pl.DataFrame({
-    #     "user_id": test_df["user_id"],
-    #     "d120_rev": test_predictions
-    # })
-
-    # submission.head()
-    return
-
-
-@app.cell
-def _():
-    # # Save predictions
-    # output_path = Path("../data/predictions")
-    # output_path.mkdir(parents=True, exist_ok=True)
-
-    # submission.write_csv(output_path / "baseline_predictions.csv")
-    # print(f"Predictions saved to {output_path / 'baseline_predictions.csv'}")
     return
 
 

@@ -53,6 +53,7 @@ make inference
 - Implement data preprocessing in dbt for better readability and automatic lineage and quality tests
 
 ### For ML performance
+- Change the segmentation logic, maybe move to a binary classification first to separate low and high revenue then try to segment again among the high performers. A PCA / clustering analysis on our dataset co    uld be interesting to determine if those cluster of top performers exists and what are their characteristics.
 - Increase training dataset size by infering `120d_rev' from recent horizons (up to horizon 30 or 60)
 - Spend  more time on feature engineering (remove very low importance columns, add flag on key features like that campaign_id that is over represented in top revenue users)
 - Add an hyperparameter tuning step in the training pipeline (ray tune / optuna)

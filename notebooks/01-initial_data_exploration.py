@@ -29,12 +29,12 @@ def _():
     from datetime import datetime, timedelta
     import numpy as np
     import plotly.graph_objects as go
-    return Path, TableReport, datetime, go, pl, sns, timedelta
+    return Path, TableReport, datetime, pl, sns, timedelta
 
 
 @app.cell
 def _(Path):
-    data_path = Path("data")
+    data_path = Path("data/raw/")
     return (data_path,)
 
 
@@ -266,11 +266,11 @@ def _(mo, pl, rev_users, slider):
                 cum_pct = (pl.col("cum_rev") / pl.col("total_rev")) * 100
             )
         )
-    
+
         users_needed = processed.filter(pl.col("cum_pct") <= target_pct).height
         total_users = processed.height
         user_pct = (users_needed / total_users) * 100
-    
+
         return users_needed, user_pct
 
     count, u_pct = calculate_pareto(rev_users, slider.value)
@@ -338,7 +338,6 @@ def _(no_rev_users, pl, rev_users_segmented):
     )
     low_rev_users = rev_users_segmented.filter(pl.col("top_rev_20pct") == False)
     no_rev_users.height, low_rev_users.height, mid_rev_users.height, high_rev_users.height, top_rev_users.height
-
     return high_rev_users, low_rev_users, mid_rev_users, top_rev_users
 
 
@@ -506,8 +505,8 @@ def _(pl, rev_users):
 
 @app.cell
 def _(mo):
-    mo.md(r"""
-    98.7% of revenue users will bring revenue on the first day. So a lot of information can be gathered from only the initial signal.
+    mo.md("""
+    98.7% of revenue users will bring revenue on the first day.
 
     While only 1.6% will do an in-app purchase
     """)
@@ -582,15 +581,13 @@ def _(mo):
     mo.md(r"""
     Conclusions:
 
-    With D0 information we can almost infer systematically users that won't generate revenue by looking at revenue they generated and simple engagement metrics like level and game count.
+    With D0 information it seems we can infer for a lot of users that they won't generate revenue by looking at revenue they generated and simple engagement metrics like level and game count.
 
-    Also, the type of revenue and the D0 progression appears to give great insights in the potential of revenue generation of users.
+    Also, the type of revenue (add vs in-app) and the D0 progression appears to give great insights in the potential of revenue generation of users.
 
     It would be interesting to try to first apply a classifier to identify potential revenue generators and then train dedicated regressor to predict the amount of revenue they will bring. This will reduce the amount of "outliers" since each class will be more "coherent" hopefully making the problem easier to solve.
     """)
     return
-
-
 
 
 @app.cell

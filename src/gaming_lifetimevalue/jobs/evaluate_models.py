@@ -1,9 +1,11 @@
 import polars as pl
+from pathlib import Path
 from gaming_lifetimevalue.jobs.infer_cohort_classifier import infer_cohort_classifier
 from gaming_lifetimevalue.jobs.infer_cohort_regressor import infer_cohort_regressor
 from gaming_lifetimevalue.evaluation.metrics import (
     evaluate_classifier,
     evaluate_regressor,
+    plot_confusion_matrix,
 )
 
 
@@ -50,12 +52,12 @@ def evaluate_models(
         all_predictions.append(cohort_with_pred)
 
         if cohort_name in top_cohorts:
-            y_true_cohort = cohort_with_pred.select(target_col).to_pandas()[target_col]
-            y_pred_cohort = cohort_with_pred.select("predicted_d120_rev").to_pandas()[
+            y_true_revenue = cohort_with_pred.select(target_col).to_pandas()[target_col]
+            y_pred_revenue = cohort_with_pred.select("predicted_d120_rev").to_pandas()[
                 "predicted_d120_rev"
             ]
             cohort_metrics[cohort_name] = evaluate_regressor(
-                y_true_cohort, y_pred_cohort
+                y_true_revenue, y_pred_revenue
             )
 
     final_predictions = pl.concat(all_predictions)
@@ -70,6 +72,12 @@ def evaluate_models(
     print("Classifier Evaluation:")
     print(f"Accuracy: {classifier_metrics['accuracy']:.4f}")
     print(f"F1 Weighted: {classifier_metrics['f1_weighted']:.4f}")
+    
+    fig = plot_confusion_matrix(y_true_cohort, y_pred_cohort, target_map)
+    output_dir = Path("data/figures")
+    output_dir.mkdir(parents=True, exist_ok=True)
+    fig.write_image(output_dir / "classifier_confusion_matrix_test.png")
+    print(f"Confusion matrix saved to {output_dir / 'classifier_confusion_matrix_test.html'}")
 
     print("\nOverall Regressor Evaluation:")
     print(f"MAE: {regressor_metrics['mae']:.4f}")

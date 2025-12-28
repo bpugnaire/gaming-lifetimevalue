@@ -4,7 +4,7 @@ import mlflow.lightgbm
 
 def setup_mlflow(experiment_name: str = "gaming-ltv"):
     """Setup MLflow experiment"""
-    mlflow.set_tracking_uri("./mlruns")
+    # mlflow.set_tracking_uri("./mlruns")
     mlflow.set_experiment(experiment_name)
     mlflow.lightgbm.autolog(
         log_models=False, log_datasets=False, disable=False, silent=True
