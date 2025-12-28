@@ -29,7 +29,7 @@ def add_segmentation_cohorts(pl_df: pl.DataFrame) -> pl.DataFrame:
         .then(pl.lit("Top 50%"))
         .otherwise(pl.lit("Low Revenue"))
     )
-    no_rev_with_cohorts = no_rev_users.with_columns(cohort=pl.lit("No Revenue"))
+    no_rev_with_cohorts = no_rev_users.with_columns(cohort=pl.lit("Low Revenue"))
     rev_with_cohorts = rev_with_cohorts.drop(
         ["top_rev_1pct", "top_rev_5pct", "top_rev_20pct", "top_rev_50pct"]
     )

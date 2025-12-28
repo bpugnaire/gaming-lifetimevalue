@@ -3,11 +3,8 @@ from lightgbm import LGBMRegressor
 
 
 def infer_cohort_regressor(
-    model: LGBMRegressor | None, infer_df: pl.DataFrame, cat_cols: list
+    model: LGBMRegressor, infer_df: pl.DataFrame, cat_cols: list
 ) -> pl.DataFrame:
-    if model is None:
-        return infer_df.with_columns(pl.lit(0.0).alias("predicted_d120_rev"))
-    
     X_infer = infer_df.drop(["cohort","predicted_cohort", "user_id", "d120_rev"]).to_pandas()
     
     for col in cat_cols:

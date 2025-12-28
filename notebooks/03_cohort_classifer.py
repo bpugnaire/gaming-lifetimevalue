@@ -194,7 +194,7 @@ def _(pl):
 @app.cell
 def _(pl):
     def add_gaming_velocity_features(df: pl.DataFrame) -> pl.DataFrame:
-    
+
         return df.with_columns([
             # 1. Monetization Intensity: How much revenue per session?
             (pl.col("d0_rev") / pl.col("session_count_d0").replace(0, 1))
@@ -241,6 +241,18 @@ def _(
     processed_data = apply_transformations(combined_data, cat_cols=cat_cols)
     processed_data.head()
     return (processed_data,)
+
+
+@app.cell
+def _(pl, processed_data):
+    processed_data.filter((pl.col("d0_rev") == 0) &(pl.col("game_count_d0")==0)).group_by("cohort").len()
+    return
+
+
+@app.cell
+def _(pl, processed_data):
+    processed_data.filter((pl.col("d0_rev") == 0)&(pl.col("cohort")=='Top 1%')).head()
+    return
 
 
 @app.cell(hide_code=True)

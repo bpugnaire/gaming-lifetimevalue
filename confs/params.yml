@@ -10,17 +10,16 @@ categorical_columns:
 target_column: d120_rev
 
 target_map:
-  "No Revenue": 0
-  "Low Revenue": 1
-  "Top 50%": 2
-  "Top 20%": 3
-  "Top 5%": 4
-  "Top 1%": 5
+  "Low Revenue": 0
+  "Top 50%": 1
+  "Top 20%": 2
+  "Top 5%": 3
+  "Top 1%": 4
 
 lgbm_classifier_params:
   n_estimators: 1000
   objective: "multiclass"
-  num_class: 6
+  num_class: 5
   metric: "multi_logloss"
   random_state: 42
 

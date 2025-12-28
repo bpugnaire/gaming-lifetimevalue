@@ -14,12 +14,4 @@ def infer_cohort_classifier(
 
     infer_df = infer_df.with_columns(pl.Series("predicted_cohort", cohort_labels))
 
-    #if d0_rev = 0 force cohort to "No Revenue"
-    infer_df = infer_df.with_columns(
-        pl.when(pl.col("d0_rev") == 0)
-        .then(pl.lit("No Revenue"))
-        .otherwise(pl.col("predicted_cohort"))
-        .alias("predicted_cohort")
-    )
-
     return infer_df

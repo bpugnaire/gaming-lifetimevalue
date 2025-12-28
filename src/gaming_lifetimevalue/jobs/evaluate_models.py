@@ -35,11 +35,9 @@ def evaluate_models(
     all_predictions = []
     cohort_metrics = {}
     
-    top_cohorts = ["top 1%", "top 5%", "top 20%"]
+    top_cohorts = ["Top 1%", "Top 5%", "Top 20%"]
     
-    cohort_regressors_with_none = {**cohort_regressors, "No Revenue": None}
-    
-    for cohort_name, regressor in cohort_regressors_with_none.items():
+    for cohort_name, regressor in cohort_regressors.items():
         cohort_data = test_with_pred.filter(
             pl.col("predicted_cohort") == cohort_name
         )

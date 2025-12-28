@@ -38,8 +38,6 @@ def main():
         cohorts = params["target_map"].keys()
 
         for cohort_name in cohorts:
-            if cohort_name == "No Revenue":
-                continue
             cohort_data = train_data.filter(train_data["cohort"] == cohort_name)
 
             if len(cohort_data) > 0:

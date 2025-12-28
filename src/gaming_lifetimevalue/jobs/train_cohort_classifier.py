@@ -9,23 +9,36 @@ from gaming_lifetimevalue.evaluation.metrics import evaluate_classifier
 def train_cohort_classifier(
     train_df: pl.DataFrame, lgbm_params: dict, cat_cols: list[str], target_map: dict
 ):
+    top_users = train_df.filter(pl.col("cohort").is_in(["Top 1%", "Top 5%", "Top 20%"]))
+    flop_users = train_df.filter(pl.col("cohort").is_in(["Low Revenue", "Top 50%"]))
+    
+    top_count = len(top_users)
+    flop_count = len(flop_users)
+    sample_fraction = top_count / flop_count
+    
+    downsampled_flop_users = flop_users.sample(fraction=sample_fraction, seed=42)
+    balanced_dataset = pl.concat([top_users, downsampled_flop_users])
+    
     y = (
-        train_df.with_columns(pl.col("cohort").replace(target_map).cast(pl.Int64))
+        balanced_dataset.with_columns(pl.col("cohort").replace(target_map).cast(pl.Int64))
         .select("cohort")
         .to_pandas()
     )
-    X = train_df.drop(["cohort", "user_id"]).to_pandas()
+    X = balanced_dataset.drop(["cohort", "user_id"]).to_pandas()
 
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.1, random_state=42, stratify=y
     )
 
-    counts = y_train["cohort"].value_counts()
-    total_samples = len(y_train)
-    num_classes = y_train["cohort"].nunique()
-    weights_map = (total_samples / (num_classes * counts)).to_dict()
-
-    train_weights = y_train["cohort"].map(weights_map).values.tolist()
+    class_weights = {
+        0: 1.0,   # Low Revenue - baseline
+        1: 2.0,   # Top 50% - 2x more important
+        2: 10.0,  # Top 20% - 10x more important
+        3: 50.0,  # Top 5% - 50x more important
+        4: 100.0, # Top 1% - 100x more important
+    }
+    
+    train_weights = y_train["cohort"].map(class_weights).values.tolist()
 
     model = LGBMClassifier(
         **lgbm_params,
