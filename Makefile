@@ -27,12 +27,16 @@ notebook:
 mlflow-ui:
 	uv run mlflow ui --backend-store-uri 
 
-preprocessing
+preprocessing:
 	uv run python src/gaming_lifetimevalue/pipelines/preprocessing.py
 
-training
+training:
 	uv run python src/gaming_lifetimevalue/pipelines/training.py
 
-inference
+inference:
 	uv run python src/gaming_lifetimevalue/pipelines/inference.py
 
+full_pipeline:
+	uv run python src/gaming_lifetimevalue/pipelines/preprocessing.py
+	uv run python src/gaming_lifetimevalue/pipelines/training.py
+	uv run python src/gaming_lifetimevalue/pipelines/inference.py

@@ -20,10 +20,10 @@ def main():
     )
     print("Loading models from MLflow...")
     classifier = load_latest_model("classifier")
-    
+
     cohort_regressors = {}
     cohorts = params["target_map"].keys()
-    
+
     for cohort_name in cohorts:
         model_name = f"regressor_{cohort_name.replace(' ', '_').replace('%', 'pct')}"
         try:
@@ -37,27 +37,29 @@ def main():
     )
 
     all_predictions = []
-    
+
     for cohort_name, regressor in cohort_regressors.items():
-        cohort_data = data_with_cohort.filter(
-            pl.col("predicted_cohort") == cohort_name
-        )
-        
+        cohort_data = data_with_cohort.filter(pl.col("predicted_cohort") == cohort_name)
+
         if len(cohort_data) == 0:
             continue
-        
+
         cohort_with_pred = infer_cohort_regressor(
             regressor, cohort_data, params["categorical_columns"]
         )
         all_predictions.append(cohort_with_pred)
-    
+
     final_predictions = pl.concat(all_predictions)
     print("Saving predictions...")
-    output_path = Path(params.get("predictions_path", "data/predictions")) / "test_predictions.parquet"
+    output_path = (
+        Path(params.get("predictions_path", "data/predictions"))
+        / "test_predictions.parquet"
+    )
     output_path.parent.mkdir(parents=True, exist_ok=True)
     final_predictions.write_parquet(output_path)
     print(f"Predictions saved to {output_path}")
     print("Inference pipeline completed.")
+
 
 if __name__ == "__main__":
     main()

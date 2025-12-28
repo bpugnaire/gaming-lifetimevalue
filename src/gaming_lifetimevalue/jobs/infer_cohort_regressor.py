@@ -9,13 +9,13 @@ def infer_cohort_regressor(
     for col in ["cohort", "predicted_cohort", "user_id", "d120_rev"]:
         if col in infer_df.columns:
             cols_to_drop.append(col)
-    
+
     X_infer = infer_df.drop(cols_to_drop).to_pandas()
-    
+
     for col in cat_cols:
         if col in X_infer.columns:
             X_infer[col] = X_infer[col].fillna("missing").astype("category")
-    
+
     numeric_cols = X_infer.select_dtypes(include=["number"]).columns
     X_infer[numeric_cols] = X_infer[numeric_cols].fillna(0)
 

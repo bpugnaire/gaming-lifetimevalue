@@ -11,12 +11,12 @@ from typing import Dict, Any
 
 def evaluate_classifier(y_true, y_pred, target_names=None) -> Dict[str, Any]:
     """Evaluate classifier performance with accuracy and F1 score.
-    
+
     Args:
         y_true: True labels
         y_pred: Predicted labels
         target_names: Optional list of class names for the classification report
-        
+
     Returns:
         Dictionary with accuracy, classification_report, and f1_weighted
     """
@@ -34,11 +34,11 @@ def evaluate_classifier(y_true, y_pred, target_names=None) -> Dict[str, Any]:
 
 def evaluate_regressor(y_true, y_pred) -> Dict[str, float]:
     """Evaluate regressor performance with MAE, RMSE, and R² metrics.
-    
+
     Args:
         y_true: True values
         y_pred: Predicted values
-        
+
     Returns:
         Dictionary with mae, rmse, r2, mean_actual, and mean_predicted
     """
@@ -49,5 +49,3 @@ def evaluate_regressor(y_true, y_pred) -> Dict[str, float]:
         "mean_actual": np.mean(y_true),
         "mean_predicted": np.mean(y_pred),
     }
-
-

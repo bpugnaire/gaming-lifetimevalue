@@ -19,7 +19,7 @@ def main():
     cutoff_date = max_date - timedelta(days=30)
     train_dataset = raw_dataset.filter(pl.col("install_date") < cutoff_date)
     valid_dataset = raw_dataset.filter(pl.col("install_date") >= cutoff_date)
-    
+
     print("Processing train and validation dataset...")
     processed_train = preprocess_input_data(
         pl_df=train_dataset, cat_cols=params["categorical_columns"]

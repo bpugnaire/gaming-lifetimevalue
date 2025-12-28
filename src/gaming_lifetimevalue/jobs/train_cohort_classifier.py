@@ -11,16 +11,18 @@ def train_cohort_classifier(
 ):
     top_users = train_df.filter(pl.col("cohort").is_in(["Top 1%", "Top 5%", "Top 20%"]))
     flop_users = train_df.filter(pl.col("cohort").is_in(["Low Revenue", "Top 50%"]))
-    
+
     top_count = len(top_users)
     flop_count = len(flop_users)
     sample_fraction = top_count / flop_count
-    
+
     downsampled_flop_users = flop_users.sample(fraction=sample_fraction, seed=42)
     balanced_dataset = pl.concat([top_users, downsampled_flop_users])
-    
+
     y = (
-        balanced_dataset.with_columns(pl.col("cohort").replace(target_map).cast(pl.Int64))
+        balanced_dataset.with_columns(
+            pl.col("cohort").replace(target_map).cast(pl.Int64)
+        )
         .select("cohort")
         .to_pandas()
     )
@@ -31,13 +33,13 @@ def train_cohort_classifier(
     )
 
     class_weights = {
-        0: 1.0,   # Low Revenue - baseline
-        1: 2.0,   # Top 50% - 2x more important
+        0: 1.0,  # Low Revenue - baseline
+        1: 2.0,  # Top 50% - 2x more important
         2: 10.0,  # Top 20% - 10x more important
         3: 50.0,  # Top 5% - 50x more important
-        4: 100.0, # Top 1% - 100x more important
+        4: 100.0,  # Top 1% - 100x more important
     }
-    
+
     train_weights = y_train["cohort"].map(class_weights).values.tolist()
 
     model = LGBMClassifier(
@@ -56,10 +58,10 @@ def train_cohort_classifier(
     metrics = evaluate_classifier(
         y_test.values.ravel(), y_pred, target_names=list(target_map.keys())
     )
-    
+
     print(f"Accuracy: {metrics['accuracy']:.4f}")
     print(f"F1 Weighted: {metrics['f1_weighted']:.4f}")
     print("\nClassification Report:")
     print(metrics["classification_report"])
-    
+
     return model

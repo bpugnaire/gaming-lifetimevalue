@@ -19,11 +19,11 @@ def preprocess_input_data(
     pl_df = remove_redundant_columns(
         pl_df, redundant_cols=["app_id", "game_type", "__index_level_0__"]
     )
-    
+
     if not inference:
         pl_df = pl_df.filter(pl.col("d120_rev").is_not_null())
         pl_df = add_segmentation_cohorts(pl_df)
-    
+
     pl_df = remove_columns_per_horizons(
         pl_df, horizons=[3, 7, 14, 30, 60, 90, 120], keep_target=not inference
     )

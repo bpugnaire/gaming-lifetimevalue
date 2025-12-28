@@ -55,7 +55,7 @@ def main():
                 )
                 mlflow.lightgbm.log_model(regressor, name=model_name)
                 cohort_regressors[cohort_name] = regressor
-        
+
         # Evaluate pipeline on valid set
         print("Evaluating models on validation data...")
         eval_metrics = evaluate_models(
@@ -66,13 +66,18 @@ def main():
             target_col=params["target_column"],
             target_map=params["target_map"],
         )
-        
-        mlflow.log_metric("valid_classifier_accuracy", eval_metrics["classifier"]["accuracy"])
-        mlflow.log_metric("valid_classifier_f1", eval_metrics["classifier"]["f1_weighted"])
+
+        mlflow.log_metric(
+            "valid_classifier_accuracy", eval_metrics["classifier"]["accuracy"]
+        )
+        mlflow.log_metric(
+            "valid_classifier_f1", eval_metrics["classifier"]["f1_weighted"]
+        )
         mlflow.log_metric("valid_mae", eval_metrics["regressor"]["mae"])
         mlflow.log_metric("valid_rmse", eval_metrics["regressor"]["rmse"])
         mlflow.log_metric("valid_r2", eval_metrics["regressor"]["r2"])
     print("Training pipeline completed.")
+
 
 if __name__ == "__main__":
     main()
