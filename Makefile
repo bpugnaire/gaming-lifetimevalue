@@ -25,7 +25,7 @@ notebook:
 	uv run marimo edit
 
 mlflow-ui:
-	uv run mlflow ui --backend-store-uri 
+	uv run mlflow ui --backend-store-uri mlruns
 
 preprocessing:
 	uv run python src/gaming_lifetimevalue/pipelines/preprocessing.py

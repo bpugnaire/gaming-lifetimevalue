@@ -62,6 +62,10 @@ def train_cohort_classifier(
     print(f"Accuracy: {metrics['accuracy']:.4f}")
     print(f"F1 Weighted: {metrics['f1_weighted']:.4f}")
     print("\nClassification Report:")
-    print(metrics["classification_report"])
-
+    for class_name, class_metrics in metrics["classification_report"].items():
+        if class_name.isdigit():
+            print(
+                f"Class {class_name} - Precision: {class_metrics['precision']:.4f}, "
+                f"Recall: {class_metrics['recall']:.4f}, F1-Score: {class_metrics['f1-score']:.4f}"
+            )
     return model

@@ -1,17 +1,20 @@
 # gaming-lifetimevalue
 
-## Quick Start
-
-```bash
-git clone <repo-url>
-make install
-```
-
 ## Requirements
 
 Mac with M-series CPU needs libomp for lightgbm:
 ```bash
 brew install libomp
+```
+
+Install uv to manage the project (https://docs.astral.sh/uv/getting-started/installation/)
+
+## Quick Start
+
+
+```bash
+git clone <repo-url>
+make install
 ```
 
 Add data samples to the `data/raw` folder.
@@ -23,7 +26,7 @@ To view and explore the different marimo notebooks of the project run
 ```bash
 make notebook
 ```
-to launch the server
+to launch the marimo server
 
 ## Pipelines
 To prepare the training and validation datasets
