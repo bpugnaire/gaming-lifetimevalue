@@ -27,7 +27,7 @@ def add_segmentation_cohorts(pl_df: pl.DataFrame) -> pl.DataFrame:
         .then(pl.lit("Top 20%"))
         .when(pl.col("top_rev_50pct"))
         .then(pl.lit("Top 50%"))
-        .otherwise(pl.lit("Others"))
+        .otherwise(pl.lit("Low Revenue"))
     )
     no_rev_with_cohorts = no_rev_users.with_columns(cohort=pl.lit("No Revenue"))
     rev_with_cohorts = rev_with_cohorts.drop(
@@ -50,8 +50,9 @@ def remove_columns_per_horizons(
     Returns:
         pl.DataFrame: DataFrame with specified horizons columns removed.
     """
+    cum_features_horizons = [f'd{dx}' for dx in horizons]
     horizons_cols = [
-        col for col in pl_df.columns if any(horizon in col for horizon in horizons)
+        col for col in pl_df.columns if any(horizon_col in col for horizon_col in cum_features_horizons)
     ]
     existing_cols_to_remove = [col for col in horizons_cols if col in pl_df.columns]
     if keep_target:
