@@ -3,16 +3,17 @@ from lightgbm import LGBMRegressor
 
 
 def infer_cohort_regressor(
-    model: LGBMRegressor, infer_df: pl.DataFrame, cat_cols: list
+    model: LGBMRegressor | None, infer_df: pl.DataFrame, cat_cols: list
 ) -> pl.DataFrame:
+    if model is None:
+        return infer_df.with_columns(pl.lit(0.0).alias("predicted_d120_rev"))
+    
     X_infer = infer_df.drop(["cohort","predicted_cohort", "user_id", "d120_rev"]).to_pandas()
     
-    # Convert categorical columns to pandas category dtype
     for col in cat_cols:
         if col in X_infer.columns:
             X_infer[col] = X_infer[col].fillna("missing").astype("category")
     
-    # Fill numeric NaN values with 0
     numeric_cols = X_infer.select_dtypes(include=["number"]).columns
     X_infer[numeric_cols] = X_infer[numeric_cols].fillna(0)
 

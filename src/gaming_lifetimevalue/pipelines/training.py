@@ -1,6 +1,6 @@
 from gaming_lifetimevalue.jobs.train_cohort_classifier import train_cohort_classifier
 from gaming_lifetimevalue.jobs.train_cohort_regressor import train_cohort_regressor
-from gaming_lifetimevalue.jobs.evaluate_pipeline import evaluate_pipeline
+from gaming_lifetimevalue.jobs.evaluate_models import evaluate_models
 from gaming_lifetimevalue.utils.config_loader import load_config
 import mlflow
 from gaming_lifetimevalue.utils.mlflow_utils import setup_mlflow
@@ -57,7 +57,7 @@ def main():
         
         # Evaluate pipeline on test set
         
-        eval_metrics = evaluate_pipeline(
+        eval_metrics = evaluate_models(
             test_df=test_data,
             classifier=classifier,
             cohort_regressors=cohort_regressors,
