@@ -21,8 +21,3 @@ dependencies = [
     "seaborn>=0.13.2",
     "skrub>=0.7.0",
 ]
-
-[dependency-groups]
-dev = [
-    "ruff>=0.14.10",
-]
