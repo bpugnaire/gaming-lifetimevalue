@@ -5,7 +5,12 @@ from lightgbm import LGBMRegressor
 def infer_cohort_regressor(
     model: LGBMRegressor, infer_df: pl.DataFrame, cat_cols: list
 ) -> pl.DataFrame:
-    X_infer = infer_df.drop(["cohort","predicted_cohort", "user_id", "d120_rev"]).to_pandas()
+    cols_to_drop = []
+    for col in ["cohort", "predicted_cohort", "user_id", "d120_rev"]:
+        if col in infer_df.columns:
+            cols_to_drop.append(col)
+    
+    X_infer = infer_df.drop(cols_to_drop).to_pandas()
     
     for col in cat_cols:
         if col in X_infer.columns:

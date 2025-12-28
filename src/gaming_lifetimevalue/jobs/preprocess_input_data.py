@@ -13,14 +13,19 @@ from gaming_lifetimevalue.transforms.feature_engineering import (
 )
 
 
-def preprocess_input_data(pl_df: pl.DataFrame, cat_cols: list[str]) -> pl.DataFrame:
+def preprocess_input_data(
+    pl_df: pl.DataFrame, cat_cols: list[str], inference: bool = False
+) -> pl.DataFrame:
     pl_df = remove_redundant_columns(
         pl_df, redundant_cols=["app_id", "game_type", "__index_level_0__"]
     )
-    pl_df = pl_df.filter(pl.col("d120_rev").is_not_null())
-    pl_df = add_segmentation_cohorts(pl_df)
+    
+    if not inference:
+        pl_df = pl_df.filter(pl.col("d120_rev").is_not_null())
+        pl_df = add_segmentation_cohorts(pl_df)
+    
     pl_df = remove_columns_per_horizons(
-        pl_df, horizons=[3, 7, 14, 30, 60, 90, 120], keep_target=True
+        pl_df, horizons=[3, 7, 14, 30, 60, 90, 120], keep_target=not inference
     )
     pl_df = process_install_date(pl_df, date_col="install_date")
     pl_df = bin_high_cardinality(pl_df, "campaign_id", top_n=10)

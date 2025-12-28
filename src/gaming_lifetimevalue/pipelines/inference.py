@@ -13,8 +13,14 @@ def main():
     raw_test_data = pl.read_parquet("data/raw/test_samples.parquet")
 
     preprocessed_data = preprocess_input_data(
-        pl_df=raw_test_data, cat_cols=params["categorical_columns"]
+        pl_df=raw_test_data, cat_cols=params["categorical_columns"], inference=True
     )
+    
+    if len(preprocessed_data) == 0:
+        raise ValueError("Preprocessed data is empty. Check if raw test data has d120_rev column or adjust preprocessing for inference.")
+    
+    if "cohort" not in preprocessed_data.columns:
+        preprocessed_data = preprocessed_data.with_columns(pl.lit("Unknown").alias("cohort"))
 
     classifier = load_latest_model("classifier")
     

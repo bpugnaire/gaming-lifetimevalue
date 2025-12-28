@@ -5,7 +5,15 @@ from lightgbm import LGBMClassifier
 def infer_cohort_classifier(
     model: LGBMClassifier, infer_df: pl.DataFrame, target_map: dict
 ) -> pl.DataFrame:
-    X_infer = infer_df.drop(["cohort", "user_id", "d120_rev"]).to_pandas()
+    cols_to_drop = []
+    for col in ["user_id", "d120_rev", "cohort"]:
+        if col in infer_df.columns:
+            cols_to_drop.append(col)
+    
+    X_infer = infer_df.drop(cols_to_drop).to_pandas()
+    
+    if X_infer.empty or X_infer.shape[1] == 0:
+        raise ValueError(f"No features left after dropping {cols_to_drop}. Available columns: {infer_df.columns}")
 
     y_pred = model.predict(X_infer)
 
