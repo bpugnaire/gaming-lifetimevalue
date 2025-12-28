@@ -4,9 +4,13 @@ import mlflow.lightgbm
 
 def setup_mlflow(experiment_name: str = "gaming-ltv"):
     """Setup MLflow experiment"""
+    mlflow.set_tracking_uri("./mlruns")
     mlflow.set_experiment(experiment_name)
     mlflow.lightgbm.autolog(
-        log_models=True, log_datasets=False, disable=False, silent=True
+        log_models=False,
+        log_datasets=False,
+        disable=False,
+        silent=True
     )
 
 
@@ -27,3 +31,4 @@ def load_latest_model(model_name: str, experiment_name: str = "gaming-ltv"):
     model_uri = f"runs:/{latest_run_id}/{model_name}"
 
     return mlflow.lightgbm.load_model(model_uri)
+

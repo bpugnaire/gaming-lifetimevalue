@@ -209,3 +209,7 @@ __marimo__/
 # Data files
 *.csv
 *.parquet
+
+# MLflow
+mlruns/*
+mlflow.db

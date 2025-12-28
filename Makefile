@@ -23,3 +23,7 @@ test:
 
 notebook:
 	uv run marimo edit
+
+mlflow-ui:
+	uv run mlflow ui --backend-store-uri mlruns
+
