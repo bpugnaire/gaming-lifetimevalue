@@ -1,8 +1,7 @@
 import polars as pl
 import lightgbm as lgb
-import numpy as np
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_absolute_error, mean_squared_error
+from gaming_lifetimevalue.evaluation.metrics import evaluate_regressor
 
 
 def train_cohort_regressor(
@@ -35,14 +34,14 @@ def train_cohort_regressor(
     )
 
     y_pred = model.predict(X_test)
-    mae = mean_absolute_error(y_test, y_pred)
-    rmse = np.sqrt(mean_squared_error(y_test, y_pred))
+    metrics = evaluate_regressor(y_test, y_pred)
 
     print(f"\n{cohort_name} Cohort:")
     print(f"  Samples: {len(train_df)}")
-    print(f"  MAE: {mae:.4f}")
-    print(f"  RMSE: {rmse:.4f}")
-    print(f"  Test Mean: {y_test.mean():.4f}")
-    print(f"  Pred Mean: {y_pred.mean():.4f}")
+    print(f"  MAE: {metrics['mae']:.4f}")
+    print(f"  RMSE: {metrics['rmse']:.4f}")
+    print(f"  R²: {metrics['r2']:.4f}")
+    print(f"  Test Mean: {metrics['mean_actual']:.4f}")
+    print(f"  Pred Mean: {metrics['mean_predicted']:.4f}")
 
     return model

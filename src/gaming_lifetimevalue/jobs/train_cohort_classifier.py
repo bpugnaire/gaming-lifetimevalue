@@ -3,7 +3,7 @@ import lightgbm as lgb
 
 from lightgbm import LGBMClassifier
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import classification_report, accuracy_score
+from gaming_lifetimevalue.evaluation.metrics import evaluate_classifier
 
 
 def train_cohort_classifier(
@@ -40,7 +40,15 @@ def train_cohort_classifier(
     )
     y_pred = model.predict(X_test)
 
-    print(f"Accuracy: {accuracy_score(y_test, y_pred):.4f}")
+    metrics = evaluate_classifier(
+        y_test.values.ravel(), y_pred, target_names=list(target_map.keys())
+    )
+    
+    print(f"Accuracy: {metrics['accuracy']:.4f}")
+    print(f"F1 Weighted: {metrics['f1_weighted']:.4f}")
     print("\nClassification Report:")
-    print(classification_report(y_test, y_pred, target_names=list(target_map.keys())))
+    for label, scores in metrics['classification_report'].items():
+        if isinstance(scores, dict):
+            print(f"{label}: {scores}")
+    
     return model
