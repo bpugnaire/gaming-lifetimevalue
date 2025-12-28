@@ -50,9 +50,11 @@ def remove_columns_per_horizons(
     Returns:
         pl.DataFrame: DataFrame with specified horizons columns removed.
     """
-    cum_features_horizons = [f'd{dx}' for dx in horizons]
+    cum_features_horizons = [f"d{dx}" for dx in horizons]
     horizons_cols = [
-        col for col in pl_df.columns if any(horizon_col in col for horizon_col in cum_features_horizons)
+        col
+        for col in pl_df.columns
+        if any(horizon_col in col for horizon_col in cum_features_horizons)
     ]
     existing_cols_to_remove = [col for col in horizons_cols if col in pl_df.columns]
     if keep_target:
