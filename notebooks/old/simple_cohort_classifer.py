@@ -18,23 +18,7 @@ def _():
     from datetime import datetime, timedelta
     import numpy as np
     import plotly.graph_objects as go
-
-    from sklearn.model_selection import train_test_split
-    from sklearn.metrics import accuracy_score, classification_report
-    from sklearn.metrics import confusion_matrix
-    import lightgbm as lgb
-
-    return (
-        Path,
-        accuracy_score,
-        classification_report,
-        confusion_matrix,
-        go,
-        lgb,
-        np,
-        pl,
-        train_test_split,
-    )
+    return Path, pl
 
 
 @app.cell
@@ -71,7 +55,6 @@ def _(pl, rev_users):
         top_rev_1pct = pl.col("d120_rev") >= pl.col("d120_rev").quantile(0.99),
         top_rev_5pct = pl.col("d120_rev") >= pl.col("d120_rev").quantile(0.95),
         top_rev_20pct = pl.col("d120_rev") >= pl.col("d120_rev").quantile(0.80),
-        top_rev_50pct = pl.col("d120_rev") >= pl.col("d120_rev").quantile(0.50),
     )
     return (rev_users_segmented,)
 
@@ -82,7 +65,6 @@ def _(no_rev_users, pl, rev_users_segmented):
         cohort = pl.when(pl.col("top_rev_1pct")).then(pl.lit("Top 1%"))
                 .when(pl.col("top_rev_5pct")).then(pl.lit("Top 5%"))
                 .when(pl.col("top_rev_20pct")).then(pl.lit("Top 20%"))
-                .when(pl.col("top_rev_50pct")).then(pl.lit("Top 50%"))
                 .otherwise(pl.lit("Low Revenue"))
     )
     no_rev_cohorts = no_rev_users.with_columns(
@@ -107,7 +89,7 @@ def _(cum_features_horizons, train_data):
 
 @app.cell
 def _(cols_to_drop, future_cum_cols, no_rev_cohorts, rev_cohorts):
-    rev_cohorts_cleaned = rev_cohorts.drop(cols_to_drop + ['top_rev_1pct', 'top_rev_5pct', 'top_rev_20pct', "top_rev_50pct"]+future_cum_cols)
+    rev_cohorts_cleaned = rev_cohorts.drop(cols_to_drop + ['top_rev_1pct', 'top_rev_5pct', 'top_rev_20pct']+future_cum_cols)
     no_rev_cohorts_cleaned = no_rev_cohorts.drop(cols_to_drop + future_cum_cols)
     return no_rev_cohorts_cleaned, rev_cohorts_cleaned
 
@@ -129,7 +111,7 @@ def _(combined_data):
     from skrub import TableReport
 
     TableReport(combined_data)
-    return
+    return (TableReport,)
 
 
 @app.cell
@@ -190,6 +172,7 @@ def _(pl):
         for col in cat_cols:
             df = df.with_columns(pl.col(col).cast(pl.Categorical).to_physical().alias(col))
         return df
+
     return cat_cols, convert_to_categorical
 
 
@@ -201,27 +184,26 @@ def _(pl):
         Handles potential division by zero using 'fill_nan' and 'fill_null'.
         """
         return df.with_columns([
-            # 1. Monetization Intensity: How much revenue per session?
             (pl.col("d0_rev") / pl.col("session_count_d0").replace(0, 1))
             .alias("rev_per_session"),
-
-            # 2. Engagement Depth: How many games played per session?
+        
             (pl.col("game_count_d0") / pl.col("session_count_d0").replace(0, 1))
             .alias("games_per_session"),
-
+        
             (pl.col("session_length_d0") / pl.col("session_count_d0").replace(0, 1))
             .alias("avg_session_duration"),
 
             (pl.col("coins_spend_sum_d0") / pl.col("session_count_d0").replace(0, 1))
             .alias("spending_pressure"),
-
+        
             (pl.col("rv_shown_count_d0") / pl.col("game_count_d0").replace(0, 1))
             .alias("rv_per_game"),
-
+        
             (pl.col("current_level_d0") / pl.col("session_length_d0").replace(0, 1))
             .alias("level_velocity"),
-
+        
         ]).fill_nan(0).fill_null(0)
+
     return (add_gaming_velocity_features,)
 
 
@@ -257,9 +239,90 @@ def _(mo):
 
 
 @app.cell
+def _(pl, processed_data):
+    target_map = {
+      "No Revenue": 0,
+      "Low Revenue": 1,
+      "Top 20%": 2,
+      "Top 5%": 3,
+      "Top 1%": 4,
+    }
+    y = processed_data.with_columns(pl.col("cohort").replace(target_map).cast(pl.Int64)).select("cohort").to_pandas()
+    return target_map, y
+
+
+@app.cell
 def _(processed_data):
     X = processed_data.drop(["cohort", "user_id"]).to_pandas()
+    return (X,)
+
+
+@app.cell
+def _(X, y):
+    from sklearn.model_selection import train_test_split
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
+    return X_test, X_train, train_test_split, y_test, y_train
+
+
+@app.cell
+def _(y_train):
+
+    counts = y_train['cohort'].value_counts()
+    total_samples = len(y_train)
+    num_classes = y_train['cohort'].nunique()
+
+
+    weights_map = (total_samples / (num_classes * counts)).to_dict()
+
+    train_weights = y_train['cohort'].map(weights_map).values.tolist()
+    return (train_weights,)
+
+
+@app.cell
+def _(X_test, X_train, cat_cols, train_weights, y_test, y_train):
+    import lightgbm as lgb
+
+    train_dataset = lgb.Dataset(X_train, label=y_train, categorical_feature=cat_cols, weight=train_weights)
+    test_dataset = lgb.Dataset(X_test, label=y_test, reference=train_dataset)
+    return lgb, test_dataset, train_dataset
+
+
+@app.cell
+def _():
     return
+
+
+@app.cell
+def _(lgb, test_dataset, train_dataset):
+    params = {
+        "objective": "multiclass",
+        "num_class": 5,
+        "metric": "multi_logloss",
+    }
+
+    model = lgb.train(
+        params,
+        train_dataset,
+        valid_sets=[train_dataset, test_dataset],
+        valid_names=["train", "valid"],
+        num_boost_round=1000,
+        callbacks=[lgb.early_stopping(stopping_rounds=50)]
+    )
+    return model, params
+
+
+@app.cell
+def _(X_test, model, target_map, y_test):
+    from sklearn.metrics import classification_report, accuracy_score
+
+    y_pred_probs = model.predict(X_test)
+    y_pred = [prob.argmax() for prob in y_pred_probs]
+
+    print(f"Accuracy: {accuracy_score(y_test, y_pred):.4f}")
+    print("\nClassification Report:")
+    print(classification_report(y_test, y_pred, target_names=list(target_map.keys())))
+    return accuracy_score, classification_report
 
 
 @app.cell(hide_code=True)
@@ -277,41 +340,35 @@ def _(
     accuracy_score,
     cat_cols,
     classification_report,
-    confusion_matrix,
-    go,
     lgb,
-    np,
+    params,
     pl,
     train_test_split,
 ):
-    def training_evaluation_pipeline(df, params):
+    def training_evaluation_pipeline(df):
         target_map = {
-            "No Revenue": 0,
-            "Low Revenue": 1,
-            "Top 50%": 2,
-            "Top 20%": 3,
-            "Top 5%": 4,
-            "Top 1%": 5,
+          "No Revenue": 0,
+          "Low Revenue": 1,
+          "Top 20%": 2,
+          "Top 5%": 3,
+          "Top 1%": 4,
         }
         y = df.with_columns(pl.col("cohort").replace(target_map).cast(pl.Int64)).select("cohort").to_pandas()
         X = df.drop(["cohort", "user_id"]).to_pandas()
-
+    
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
-
-        # 1. Calculate class counts
+    
         counts = y_train['cohort'].value_counts()
         total_samples = len(y_train)
         num_classes = y_train['cohort'].nunique()
 
-        # 2. Calculate weights using the balanced formula
         weights_map = (total_samples / (num_classes * counts)).to_dict()
 
-        # 3. Map weights to the training labels to create the weight vector
         train_weights = y_train['cohort'].map(weights_map).values.tolist()
-
+    
         train_dataset = lgb.Dataset(X_train, label=y_train, categorical_feature=cat_cols, weight=train_weights)
         test_dataset = lgb.Dataset(X_test, label=y_test, reference=train_dataset)
-
+    
         model = lgb.train(
             params,
             train_dataset,
@@ -320,18 +377,21 @@ def _(
             num_boost_round=1000,
             callbacks=[lgb.early_stopping(stopping_rounds=50)]
         )
-
+    
         y_pred_probs = model.predict(X_test)
         y_pred = [prob.argmax() for prob in y_pred_probs]
 
         print(f"Accuracy: {accuracy_score(y_test, y_pred):.4f}")
         print("\nClassification Report:")
         print(classification_report(y_test, y_pred, target_names=list(target_map.keys())))
+        import plotly.graph_objects as go
+        from sklearn.metrics import confusion_matrix
+        import numpy as np
 
         # 1. Compute the matrix
         labels = list(target_map.keys())
         cm = confusion_matrix(y_test, y_pred)
-
+    
         # 2. Normalize by row (Actual class) to see percentages
         cm_perc = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
 
@@ -353,25 +413,27 @@ def _(
             width=600,
             height=600
         )
-
+    
         return fig
+
     return (training_evaluation_pipeline,)
 
 
 @app.cell
 def _(pl, processed_data):
     top_users = processed_data.filter(pl.col("cohort").is_in(["Top 1%", "Top 5%", "Top 20%"]))
-
-    flop_users = processed_data.filter(pl.col("cohort").is_in(["No Revenue", "Low Revenue", "Top 50%"]))
+    
+    flop_users = processed_data.filter(pl.col("cohort").is_in(["No Revenue", "Low Revenue"]))
 
     print(f"Top users count: {len(top_users)}")
     print(f"Low revenue users count: {len(flop_users)}")
+
     return flop_users, top_users
 
 
 @app.cell
 def _(flop_users, pl, processed_data, top_users):
-    downsampled_flop_users = flop_users.sample(fraction=0.2, seed=42) 
+    downsampled_flop_users = flop_users.sample(fraction=0.1, seed=42) 
     balanced_dataset = pl.concat([top_users, downsampled_flop_users])
 
     print(f"Original size: {len(processed_data)}")
@@ -380,93 +442,8 @@ def _(flop_users, pl, processed_data, top_users):
 
 
 @app.cell
-def _():
-    params = {
-        "objective": "multiclass",
-        "num_class": 6,
-        "metric": "multi_logloss",
-        # "boosting_type": "gbdt",
-        # "learning_rate": 0.02,    # Lowered for better precision
-        # "num_leaves": 40,         # Slightly more complex
-        # "max_depth": 8,           # Added to prevent deep overfitting
-        # "min_data_in_leaf": 50,   # Ensures patterns are statistically significant
-        # "feature_fraction": 0.8,  # Randomly drop 20% of features per tree
-        # "bagging_fraction": 0.7,  # Randomly drop 30% of data per tree
-        # "bagging_freq": 5,        # Perform bagging every 5 iterations
-        # "lambda_l1": 0.5,         # Light L1 regularization
-        # "verbosity": 1,
-        # "pos_bagging_fraction": 1.0, # Use all samples from the minority class
-        # "neg_bagging_fraction": 0.1, # Subsample the majority class (the bottom 80%)
-        # "bagging_freq": 1,
-    }
-    return (params,)
-
-
-@app.cell
-def _(balanced_dataset, params, training_evaluation_pipeline):
-    training_evaluation_pipeline(balanced_dataset, params=params)
-    return
-
-
-@app.cell
-def _():
-    return
-
-
-@app.cell
-def _(X_test, model, vip_score, y_test):
-    def plot_matrix(target_map, y_test, y_pred_probs, vip_score, vip_threshold):
-        import plotly.graph_objects as go
-        from sklearn.metrics import confusion_matrix
-        import numpy as np
-
-        # --- 1. Standard Multi-Class Matrix (Argmax) ---
-        y_pred_standard = [prob.argmax() for prob in y_pred_probs]
-        labels = list(target_map.keys())
-        cm_multi = confusion_matrix(y_test, y_pred_standard)
-        cm_multi_perc = cm_multi.astype('float') / cm_multi.sum(axis=1)[:, np.newaxis]
-
-        # --- 2. VIP Binary Matrix (Threshold-based) ---
-        # Actual VIPs are the last two classes (Top 5% and Top 1%)
-        actual_vips = y_test['cohort'].isin([4, 5]).astype(int)
-        predicted_vips = (vip_score >= vip_threshold).astype(int)
-    
-        cm_binary = confusion_matrix(actual_vips, predicted_vips)
-        cm_binary_perc = cm_binary.astype('float') / cm_binary.sum(axis=1)[:, np.newaxis]
-
-        # --- Plotting the Binary VIP Matrix ---
-        # This shows how well the cumulative score separates Whales from the rest
-        fig_vip = go.Figure(data=go.Heatmap(
-            z=cm_binary_perc,
-            x=["Predicted Not VIP", "Predicted VIP"],
-            y=["Actual Not VIP", "Actual VIP"],
-            text=np.around(cm_binary_perc, 2),
-            texttemplate="%{text}",
-            colorscale='RdBu',
-            reversescale=True
-        ))
-
-        fig_vip.update_layout(
-            title=f'VIP Detection Matrix (Threshold: {vip_threshold})',
-            width=500, height=500
-        )
-
-        return fig_vip, cm_multi_perc
-
-    plot_matrix_fig, multi_class_cm = plot_matrix(
-        target_map={
-            "No Revenue": 0,
-            "Low Revenue": 1,
-            "Top 50%": 2,
-            "Top 20%": 3,
-            "Top 5%": 4,
-            "Top 1%": 5,
-        },
-        y_test=y_test,
-        y_pred_probs=model.predict(X_test),
-        vip_score=vip_score,
-        vip_threshold=0.3
-    )
+def _(balanced_dataset, training_evaluation_pipeline):
+    training_evaluation_pipeline(balanced_dataset)
     return
 
 
@@ -475,6 +452,24 @@ def _(mo):
     mo.md(r"""
     ## Classifier with business logic first
     """)
+    return
+
+
+@app.cell
+def _(TableReport, pl, processed_data):
+    TableReport(processed_data.filter(pl.col("cohort") == "Low Revenue"), max_plot_columns=50)
+    return
+
+
+@app.cell
+def _(TableReport, pl, processed_data):
+    TableReport(processed_data.filter(pl.col("cohort") == "Top 20%"), max_plot_columns=50)
+    return
+
+
+@app.cell
+def _(processed_data):
+    processed_data.group_by("cohort").len().sort("len", descending=True)
     return
 
 
