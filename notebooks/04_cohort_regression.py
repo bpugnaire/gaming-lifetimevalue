@@ -47,6 +47,14 @@ def _(Path, pl):
     return (train_data,)
 
 
+app._unparsable_cell(
+    r"""
+    train_data.select('install_date').max().
+    """,
+    name="_"
+)
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""

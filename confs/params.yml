@@ -7,6 +7,15 @@ categorical_columns:
   - app_version
   - language
 
+target_column: 120d_rev
+
+cohorts: 
+- Top 1%
+- Top 5%
+- Top 20%
+- Top 50%
+- Low Revenue
+
 lgbm_classifier_params:
   n_estimators: 1000
   objective: "multiclass"

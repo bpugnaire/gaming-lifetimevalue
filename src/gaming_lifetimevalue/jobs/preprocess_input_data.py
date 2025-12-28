@@ -13,7 +13,7 @@ from gaming_lifetimevalue.transforms.feature_engineering import (
     bin_high_cardinality,
 )
 
-def preprocessing_pipeline(data_path: str, cat_cols: list[str]) -> pl.DataFrame:
+def preprocess_input_data(data_path: str, cat_cols: list[str]) -> pl.DataFrame:
     data_path = Path(data_path)
     df = pl.read_parquet(data_path)
     df = remove_redundant_columns(df, redundant_cols=['app_id', 'game_type', '__index_level_0__'])
