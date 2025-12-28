@@ -4,7 +4,7 @@ from gaming_lifetimevalue.jobs.infer_cohort_regressor import infer_cohort_regres
 from gaming_lifetimevalue.evaluation.metrics import evaluate_classifier, evaluate_regressor
 
 
-def evaluate_pipeline(
+def evaluate_models(
     test_df: pl.DataFrame,
     classifier,
     cohort_regressors: dict,
@@ -33,8 +33,13 @@ def evaluate_pipeline(
     )
     
     all_predictions = []
+    cohort_metrics = {}
     
-    for cohort_name, regressor in cohort_regressors.items():
+    top_cohorts = ["top 1%", "top 5%", "top 20%"]
+    
+    cohort_regressors_with_none = {**cohort_regressors, "No Revenue": None}
+    
+    for cohort_name, regressor in cohort_regressors_with_none.items():
         cohort_data = test_with_pred.filter(
             pl.col("predicted_cohort") == cohort_name
         )
@@ -44,6 +49,11 @@ def evaluate_pipeline(
         
         cohort_with_pred = infer_cohort_regressor(regressor, cohort_data, cat_cols)
         all_predictions.append(cohort_with_pred)
+        
+        if cohort_name in top_cohorts:
+            y_true_cohort = cohort_with_pred.select(target_col).to_pandas()[target_col]
+            y_pred_cohort = cohort_with_pred.select("predicted_d120_rev").to_pandas()["predicted_d120_rev"]
+            cohort_metrics[cohort_name] = evaluate_regressor(y_true_cohort, y_pred_cohort)
     
     final_predictions = pl.concat(all_predictions)
     
@@ -56,12 +66,21 @@ def evaluate_pipeline(
     print(f"Accuracy: {classifier_metrics['accuracy']:.4f}")
     print(f"F1 Weighted: {classifier_metrics['f1_weighted']:.4f}")
     
-    print(f"\nRegressor Evaluation:")
+    print(f"\nOverall Regressor Evaluation:")
     print(f"MAE: {regressor_metrics['mae']:.4f}")
     print(f"RMSE: {regressor_metrics['rmse']:.4f}")
-    print(f"R²: {regressor_metrics['r2']:.4f}")
+    
+    for cohort_name in top_cohorts:
+        if cohort_name in cohort_metrics:
+            metrics = cohort_metrics[cohort_name]
+            print(f"\n{cohort_name} Regressor:")
+            print(f"  MAE: {metrics['mae']:.4f}")
+            print(f"  RMSE: {metrics['rmse']:.4f}")
+            print(f"  Actual Mean: {metrics['mean_actual']:.4f}")
+            print(f"  Predicted Mean:{metrics['mean_predicted']:.4f}")
     
     return {
         "classifier": classifier_metrics,
         "regressor": regressor_metrics,
+        "cohort_regressors": cohort_metrics,
     }

@@ -47,8 +47,6 @@ def train_cohort_classifier(
     print(f"Accuracy: {metrics['accuracy']:.4f}")
     print(f"F1 Weighted: {metrics['f1_weighted']:.4f}")
     print("\nClassification Report:")
-    for label, scores in metrics['classification_report'].items():
-        if isinstance(scores, dict):
-            print(f"{label}: {scores}")
+    print(metrics["classification_report"])
     
     return model
