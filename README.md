@@ -44,6 +44,7 @@ make inference
 ## What I would do with more time
 
 ### For production robustness
+- Implement unit tests
 - Add strong type checking and column schema to input and output dataframes (pydantic, pandera)
 - Add logging to jobs and pipelines
 - Implement data preprocessing in dbt for better readability and automatic lineage and quality tests

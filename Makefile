@@ -36,7 +36,7 @@ training:
 inference:
 	uv run python src/gaming_lifetimevalue/pipelines/inference.py
 
-full_pipeline:
+full-pipeline:
 	uv run python src/gaming_lifetimevalue/pipelines/preprocessing.py
 	uv run python src/gaming_lifetimevalue/pipelines/training.py
 	uv run python src/gaming_lifetimevalue/pipelines/inference.py
