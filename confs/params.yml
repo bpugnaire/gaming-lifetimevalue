@@ -1,0 +1,24 @@
+categorical_columns:
+  - country
+  - platform
+  - acquisition_channel
+  - device_type
+  - os_version
+  - app_version
+  - language
+
+lgbm_classifier_params:
+  n_estimators: 1000
+  objective: "multiclass"
+  num_class: 6
+  metric: "multi_logloss"
+  random_state: 42
+  enable_categorical: true
+
+lgbm_regressor_params:
+  n_estimators: 1000
+  random_state: 42
+  enable_categorical: true
+
+raw_data_path: data/raw/training_data.parquet
+training_data_path: data/processed/training_data.parquet
