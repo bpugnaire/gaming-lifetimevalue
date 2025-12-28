@@ -5,7 +5,7 @@ from lightgbm import LGBMClassifier
 def infer_cohort_classifier(
     model: LGBMClassifier, infer_df: pl.DataFrame, target_map: dict
 ) -> pl.DataFrame:
-    X_infer = infer_df.drop(["cohort", "user_id"]).to_pandas()
+    X_infer = infer_df.drop(["cohort", "user_id", "d120_rev"]).to_pandas()
 
     y_pred = model.predict(X_infer)
 
@@ -13,5 +13,13 @@ def infer_cohort_classifier(
     cohort_labels = [inverse_target_map[pred] for pred in y_pred]
 
     infer_df = infer_df.with_columns(pl.Series("predicted_cohort", cohort_labels))
+
+    #if d0_rev = 0 force cohort to "No Revenue"
+    infer_df = infer_df.with_columns(
+        pl.when(pl.col("d0_rev") == 0)
+        .then(pl.lit("No Revenue"))
+        .otherwise(pl.col("predicted_cohort"))
+        .alias("predicted_cohort")
+    )
 
     return infer_df

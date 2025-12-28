@@ -4,12 +4,22 @@ from sklearn.metrics import (
     classification_report,
     mean_absolute_error,
     mean_squared_error,
+    r2_score,
 )
 from typing import Dict, Any
 
 
 def evaluate_classifier(y_true, y_pred, target_names=None) -> Dict[str, Any]:
-    """Evaluate classification model"""
+    """Evaluate classifier performance with accuracy and F1 score.
+    
+    Args:
+        y_true: True labels
+        y_pred: Predicted labels
+        target_names: Optional list of class names for the classification report
+        
+    Returns:
+        Dictionary with accuracy, classification_report, and f1_weighted
+    """
     accuracy = accuracy_score(y_true, y_pred)
     report = classification_report(
         y_true, y_pred, target_names=target_names, output_dict=True
@@ -23,21 +33,21 @@ def evaluate_classifier(y_true, y_pred, target_names=None) -> Dict[str, Any]:
 
 
 def evaluate_regressor(y_true, y_pred) -> Dict[str, float]:
-    """Evaluate regression model"""
+    """Evaluate regressor performance with MAE, RMSE, and R² metrics.
+    
+    Args:
+        y_true: True values
+        y_pred: Predicted values
+        
+    Returns:
+        Dictionary with mae, rmse, r2, mean_actual, and mean_predicted
+    """
     return {
         "mae": mean_absolute_error(y_true, y_pred),
         "rmse": np.sqrt(mean_squared_error(y_true, y_pred)),
+        "r2": r2_score(y_true, y_pred),
+        "mean_actual": np.mean(y_true),
+        "mean_predicted": np.mean(y_pred),
     }
 
 
-def compute_cohort_metrics(df_with_predictions, cohort_col="cohort"):
-    """Compute metrics per cohort"""
-    cohort_metrics = {}
-
-    for cohort_name, group in df_with_predictions.group_by(cohort_col):
-        y_true = group["d120_rev"].to_numpy()
-        y_pred = group["predicted_d120_rev"].to_numpy()
-
-        cohort_metrics[cohort_name] = evaluate_regressor(y_true, y_pred)
-
-    return cohort_metrics
