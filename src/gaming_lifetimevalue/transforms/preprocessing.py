@@ -1,5 +1,6 @@
 import polars as pl
 
+
 def add_segmentation_cohorts(pl_df: pl.DataFrame) -> pl.DataFrame:
     """
     Add segmentation cohorts to the DataFrame based on revenue quantiles.
@@ -74,7 +75,3 @@ def remove_redundant_columns(
     """
     existing_cols_to_remove = [col for col in redundant_cols if col in pl_df.columns]
     return pl_df.drop(existing_cols_to_remove)
-
-
-
-

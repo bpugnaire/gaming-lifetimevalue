@@ -4,16 +4,18 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 
-def train_cohort_regressor(train_df: pl.DataFrame, lgbm_params: dict, cohort_name: str, cat_cols: list):
 
+def train_cohort_regressor(
+    train_df: pl.DataFrame, lgbm_params: dict, cohort_name: str, cat_cols: list
+):
     X = train_df.drop(["cohort", "user_id", "d120_rev"]).to_pandas()
     y = train_df.select("d120_rev").to_pandas()["d120_rev"]
 
     for col in cat_cols:
         if col in X.columns:
-            X[col] = X[col].fillna('missing').astype('category')
+            X[col] = X[col].fillna("missing").astype("category")
 
-    numeric_cols = X.select_dtypes(include=['number']).columns
+    numeric_cols = X.select_dtypes(include=["number"]).columns
     X[numeric_cols] = X[numeric_cols].fillna(0)
 
     X_train, X_test, y_train, y_test = train_test_split(
@@ -25,10 +27,11 @@ def train_cohort_regressor(train_df: pl.DataFrame, lgbm_params: dict, cohort_nam
     )
 
     model.fit(
-        X_train, y_train,
+        X_train,
+        y_train,
         eval_set=[(X_test, y_test)],
         categorical_feature=cat_cols,
-        callbacks=[lgb.early_stopping(stopping_rounds=50, verbose=False)]
+        callbacks=[lgb.early_stopping(stopping_rounds=50, verbose=False)],
     )
 
     y_pred = model.predict(X_test)

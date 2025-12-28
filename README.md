@@ -29,3 +29,8 @@ brew install libomp
 
 ### For ML performance
 - Increase training dataset size by infering `120d_rev' from recent horizons (up to horizon 30 or 60)
+- Spend a bit more time on feature engineering (remove very low importance columns, add flag on key features like that campaign_id that is over represented in top revenue users)
+- Add an hyperparameter tuning step in the training pipeline (ray tune / optuna)
+
+### For adoption
+- Add more metrics that focus on business KPIs (eg. '% missed whales')

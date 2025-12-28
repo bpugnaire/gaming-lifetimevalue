@@ -9,12 +9,13 @@ categorical_columns:
 
 target_column: 120d_rev
 
-cohorts: 
-- Top 1%
-- Top 5%
-- Top 20%
-- Top 50%
-- Low Revenue
+target_map:
+  "No Revenue": 0
+  "Low Revenue": 1
+  "Top 50%": 2
+  "Top 20%": 3
+  "Top 5%": 4
+  "Top 1%": 5
 
 lgbm_classifier_params:
   n_estimators: 1000

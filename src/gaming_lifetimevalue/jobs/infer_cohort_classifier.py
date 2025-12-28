@@ -2,7 +2,9 @@ import polars as pl
 from lightgbm import LGBMClassifier
 
 
-def infer_cohort_classifier(model: LGBMClassifier, infer_df: pl.DataFrame,  target_map: dict) -> pl.DataFrame:
+def infer_cohort_classifier(
+    model: LGBMClassifier, infer_df: pl.DataFrame, target_map: dict
+) -> pl.DataFrame:
     X_infer = infer_df.drop(["cohort", "user_id"]).to_pandas()
 
     y_pred = model.predict(X_infer)

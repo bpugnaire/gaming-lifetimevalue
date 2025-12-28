@@ -1,5 +1,6 @@
 import polars as pl
 
+
 def add_gaming_velocity_features(pl_df: pl.DataFrame) -> pl.DataFrame:
     """
     Creates intensity and velocity features to help distinguish high-value users.
@@ -39,6 +40,7 @@ def add_gaming_velocity_features(pl_df: pl.DataFrame) -> pl.DataFrame:
         .fill_null(0)
     )
 
+
 def process_install_date(pl_df: pl.DataFrame, date_col: str) -> pl.DataFrame:
     """
     Process install date column to extract useful features.
@@ -57,6 +59,7 @@ def process_install_date(pl_df: pl.DataFrame, date_col: str) -> pl.DataFrame:
         ]
     ).drop(date_col)
 
+
 def convert_to_categorical(pl_df: pl.DataFrame, cat_cols: list) -> pl.DataFrame:
     """
     Convert specified features to categorical data type.
@@ -71,6 +74,7 @@ def convert_to_categorical(pl_df: pl.DataFrame, cat_cols: list) -> pl.DataFrame:
             pl.col(col).cast(pl.Categorical).to_physical().alias(col)
         )
     return pl_df
+
 
 def bin_high_cardinality(
     pl_df: pl.DataFrame, column: str, top_n: int = 10
