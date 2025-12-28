@@ -148,7 +148,6 @@ def _(X_test, X_train, cat_cols, lgb, y_test, y_train):
             lgb.early_stopping(stopping_rounds=10, verbose=False),
         ]
     )
-
     return (model,)
 
 
@@ -202,7 +201,7 @@ def _(pl, y_test):
 
 @app.cell
 def _(mo):
-    mo.md(r"""
+    mo.md("""
     ## Segmented metrics
     """)
     return
@@ -232,23 +231,25 @@ def _(
         for cohort_name, group in df_with_cohorts.group_by("cohort"):
             y_true_seg = group["d120_rev"].to_numpy()
             y_pred_seg = group["y_pred"].to_numpy()
-        
+
             mae = mean_absolute_error(y_true_seg, y_pred_seg)
             rmse = np.sqrt(mean_squared_error(y_true_seg, y_pred_seg))
-        
+
             try:
                 r2 = r2_score(y_true_seg, y_pred_seg)
             except:
                 r2 = float('nan')
-            
+
             results.append({
                 "Cohort": cohort_name,
                 "MAE": mae,
                 "RMSE": rmse,
                 "R2": r2,
-                "Count": len(group)
+                "Count": len(group),
+                "Test mean": y_true_seg.mean(),
+                "Pred mean": y_pred_seg.mean(),
             })
-    
+
         return pl.DataFrame(results).sort("MAE", descending=True)
     compute_metrics_segmented(df_with_cohorts)
     return
