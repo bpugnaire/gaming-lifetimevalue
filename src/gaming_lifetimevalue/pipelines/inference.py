@@ -8,20 +8,17 @@ from pathlib import Path
 
 
 def main():
+    print("Starting inference pipeline...")
     params = load_config()
 
+    print("Loading raw test data...")
     raw_test_data = pl.read_parquet("data/raw/test_samples.parquet")
 
+    print("Preprocessing test data...")
     preprocessed_data = preprocess_input_data(
         pl_df=raw_test_data, cat_cols=params["categorical_columns"], inference=True
     )
-    
-    if len(preprocessed_data) == 0:
-        raise ValueError("Preprocessed data is empty. Check if raw test data has d120_rev column or adjust preprocessing for inference.")
-    
-    if "cohort" not in preprocessed_data.columns:
-        preprocessed_data = preprocessed_data.with_columns(pl.lit("Unknown").alias("cohort"))
-
+    print("Loading models from MLflow...")
     classifier = load_latest_model("classifier")
     
     cohort_regressors = {}
@@ -34,6 +31,7 @@ def main():
         except Exception as e:
             print(f"Warning: Could not load {model_name}: {e}")
 
+    print("Running inference...")
     data_with_cohort = infer_cohort_classifier(
         classifier, preprocessed_data, params["target_map"]
     )
@@ -54,11 +52,12 @@ def main():
         all_predictions.append(cohort_with_pred)
     
     final_predictions = pl.concat(all_predictions)
-
+    print("Saving predictions...")
     output_path = Path(params.get("predictions_path", "data/predictions")) / "test_predictions.parquet"
     output_path.parent.mkdir(parents=True, exist_ok=True)
     final_predictions.write_parquet(output_path)
-
+    print(f"Predictions saved to {output_path}")
+    print("Inference pipeline completed.")
 
 if __name__ == "__main__":
     main()

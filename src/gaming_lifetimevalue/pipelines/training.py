@@ -9,20 +9,22 @@ import polars as pl
 
 
 def main():
+    print("Starting training pipeline...")
     # load parameters from confs/params.yml
     params = load_config()
-
-    # Load training and test data
+    print("Loading training and validation data...")
+    # Load training and validation data
     train_data = pl.read_parquet(
         Path(params["processed_data_path"]) / "train_data.parquet"
     )
-    test_data = pl.read_parquet(
-        Path(params["processed_data_path"]) / "test_data.parquet"
+    valid_data = pl.read_parquet(
+        Path(params["processed_data_path"]) / "valid_data.parquet"
     )
 
     setup_mlflow(experiment_name="gaming-ltv")
 
     with mlflow.start_run(run_name="two_step_pipeline"):
+        print("Training cohort classifier...")
         # Train cohort classifier
         classifier = train_cohort_classifier(
             train_df=train_data.drop([params["target_column"]]),
@@ -34,6 +36,7 @@ def main():
         mlflow.lightgbm.log_model(classifier, name="classifier")
 
         # Train cohort regressors
+        print("Training cohort regressors...")
         cohort_regressors = {}
         cohorts = params["target_map"].keys()
 
@@ -53,10 +56,10 @@ def main():
                 mlflow.lightgbm.log_model(regressor, name=model_name)
                 cohort_regressors[cohort_name] = regressor
         
-        # Evaluate pipeline on test set
-        
+        # Evaluate pipeline on valid set
+        print("Evaluating models on validation data...")
         eval_metrics = evaluate_models(
-            test_df=test_data,
+            test_df=valid_data,
             classifier=classifier,
             cohort_regressors=cohort_regressors,
             cat_cols=params["categorical_columns"],
@@ -64,12 +67,12 @@ def main():
             target_map=params["target_map"],
         )
         
-        mlflow.log_metric("test_classifier_accuracy", eval_metrics["classifier"]["accuracy"])
-        mlflow.log_metric("test_classifier_f1", eval_metrics["classifier"]["f1_weighted"])
-        mlflow.log_metric("test_mae", eval_metrics["regressor"]["mae"])
-        mlflow.log_metric("test_rmse", eval_metrics["regressor"]["rmse"])
-        mlflow.log_metric("test_r2", eval_metrics["regressor"]["r2"])
-
+        mlflow.log_metric("valid_classifier_accuracy", eval_metrics["classifier"]["accuracy"])
+        mlflow.log_metric("valid_classifier_f1", eval_metrics["classifier"]["f1_weighted"])
+        mlflow.log_metric("valid_mae", eval_metrics["regressor"]["mae"])
+        mlflow.log_metric("valid_rmse", eval_metrics["regressor"]["rmse"])
+        mlflow.log_metric("valid_r2", eval_metrics["regressor"]["r2"])
+    print("Training pipeline completed.")
 
 if __name__ == "__main__":
     main()
