@@ -56,7 +56,7 @@ def main():
         / "test_predictions.parquet"
     )
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    final_predictions.write_parquet(output_path)
+    final_predictions.select(['user_id', 'predicted_d120_rev']).write_parquet(output_path)
     print(f"Predictions saved to {output_path}")
     print("Inference pipeline completed.")
 
