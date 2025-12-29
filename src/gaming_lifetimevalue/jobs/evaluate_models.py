@@ -72,12 +72,14 @@ def evaluate_models(
     print("Classifier Evaluation:")
     print(f"Accuracy: {classifier_metrics['accuracy']:.4f}")
     print(f"F1 Weighted: {classifier_metrics['f1_weighted']:.4f}")
-    
+
     fig = plot_confusion_matrix(y_true_cohort, y_pred_cohort, target_map)
     output_dir = Path("data/figures")
     output_dir.mkdir(parents=True, exist_ok=True)
     fig.write_image(output_dir / "classifier_confusion_matrix_test.png")
-    print(f"Confusion matrix saved to {output_dir / 'classifier_confusion_matrix_test.html'}")
+    print(
+        f"Confusion matrix saved to {output_dir / 'classifier_confusion_matrix_test.html'}"
+    )
 
     print("\nOverall Regressor Evaluation:")
     print(f"MAE: {regressor_metrics['mae']:.4f}")

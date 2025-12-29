@@ -19,6 +19,7 @@ dependencies = [
     "polars>=1.36.1",
     "pyarrow>=22.0.0",
     "pytest>=9.0.2",
+    "ruff>=0.14.10",
     "seaborn>=0.13.2",
     "skrub>=0.7.0",
 ]

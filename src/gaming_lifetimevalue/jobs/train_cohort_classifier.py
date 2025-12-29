@@ -4,7 +4,10 @@ from pathlib import Path
 
 from lightgbm import LGBMClassifier
 from sklearn.model_selection import train_test_split
-from gaming_lifetimevalue.evaluation.metrics import evaluate_classifier, plot_confusion_matrix
+from gaming_lifetimevalue.evaluation.metrics import (
+    evaluate_classifier,
+    plot_confusion_matrix,
+)
 
 
 def train_cohort_classifier(
@@ -66,11 +69,13 @@ def train_cohort_classifier(
                 f"Class {class_name} - Precision: {class_metrics['precision']:.4f}, "
                 f"Recall: {class_metrics['recall']:.4f}, F1-Score: {class_metrics['f1-score']:.4f}"
             )
-    
+
     fig = plot_confusion_matrix(y_test.values.ravel(), y_pred, target_map)
     output_dir = Path("data/figures")
     output_dir.mkdir(parents=True, exist_ok=True)
     fig.write_image(output_dir / "classifier_confusion_matrix_train.png")
-    print(f"\nConfusion matrix saved to {output_dir / 'classifier_confusion_matrix_train.png'}")
-    
+    print(
+        f"\nConfusion matrix saved to {output_dir / 'classifier_confusion_matrix_train.png'}"
+    )
+
     return model
